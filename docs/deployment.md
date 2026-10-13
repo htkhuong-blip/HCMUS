@@ -1,18 +1,23 @@
 # Triển khai website HeritageKit
 
-Ứng dụng có SQLite và tệp tải lên nên cần **lưu trữ bền vững**. Không dùng gói chỉ có filesystem tạm để lưu dữ liệu thật. Render Blueprint đi kèm chọn dịch vụ và ổ đĩa có phí; cần chủ tài khoản xem giá hiện tại và thiết lập thanh toán trước khi tạo tài nguyên. Chưa có dịch vụ/chi phí nào được tạo bởi các tệp cấu hình.
+## Bản xem thử miễn phí trên Render
 
-## Render (HTTPS do nền tảng cấp)
+`render.yaml` hiện dùng **plan: free**, không tạo ổ đĩa trả phí. Cấu hình này để xem thử và thử chức năng. SQLite và tệp đính kèm nằm trên filesystem tạm: dữ liệu có thể mất khi Render tạo lại máy chủ hoặc triển khai lại. Không dùng bản này để giữ hồ sơ thật lâu dài. Dịch vụ miễn phí có thể ngủ khi không dùng và mất thời gian khởi động lại; các hạn mức phụ thuộc chính sách hiện hành của Render.
 
-1. Mã nguồn và `render.yaml` đã ở nhánh `deploy/heritagekit` của `htkhuong-blip/HCMUS`: https://github.com/htkhuong-blip/HCMUS/tree/deploy/heritagekit. Chọn đúng nhánh này khi tạo Blueprint.
-2. Đăng nhập Render bằng tài khoản của bạn, kết nối repository; chọn **New → Blueprint**, chọn repository và nhánh chứa cấu hình.
-3. Xem `render.yaml`: 1 dịch vụ Docker, 1 ổ đĩa bền vững tại `/var/lib/heritage`, không triển khai tự động khi có commit mới. Xem lại giá/gói và vùng máy chủ.
-4. Điền `ADMIN_PASSWORD` trong biểu mẫu môi trường **bảo mật** của Render (ít nhất 12 ký tự); không gửi mật khẩu trong chat. Biến chỉ dùng lần đầu tạo database. ADMIN_EMAIL mặc định `admin@heritagekit.local`, có thể đổi trước lần đầu.
-5. Tạo Blueprint và chờ health check `/api/health` đạt. Mở URL HTTPS do Render cung cấp. Ứng dụng dùng `RENDER_EXTERNAL_URL` để tạo QR và kiểm tra Origin. Nếu dùng tên miền riêng, đặt `PUBLIC_URL=https://ten-mien-cua-ban` rồi khởi động lại dịch vụ.
-6. Đăng nhập, tạo tài khoản người nhập và chuyên gia, thử hồ sơ nháp → kiểm chứng → công bố, tải tư liệu và quét QR trên điện thoại. Xác minh tệp/database còn sau khi khởi động lại dịch vụ.
-7. Đặt lịch sao lưu và lưu bản hoàn tất ở vị trí ngoài ổ đĩa dịch vụ. Snapshot cùng máy không bảo vệ khi xóa dịch vụ/ổ đĩa.
+Không cần sử dụng Blueprint để tạo một Web Service miễn phí:
 
-Blueprint không chuyển dữ liệu từ máy phát triển. Tạo database mới hoặc phục hồi snapshot đầy đủ qua terminal quản trị khi dịch vụ đã dừng và vị trí lưu được cấp đúng quyền. Không đưa database/log khởi tạo/mật khẩu lên GitHub.
+1. Đăng ký/đăng nhập Render, chọn **New → Web Service** và kết nối GitHub.
+2. Chọn repository `htkhuong-blip/HCMUS`, nhánh `deploy/heritagekit`, runtime **Docker**.
+3. Chọn instance **Free**. Không thêm Disk hoặc dịch vụ trả phí.
+4. Thêm `ADMIN_PASSWORD` (ít nhất 12 ký tự) trong mục Environment của Render, không gửi mật khẩu trong chat. Email quản trị mặc định `admin@heritagekit.local`.
+5. Đặt health check `/api/health`, tạo dịch vụ và chờ triển khai. Mở URL HTTPS được Render cấp. Ứng dụng sử dụng `RENDER_EXTERNAL_URL` để tạo QR.
+6. Dùng dữ liệu thử; xuất dữ liệu/tải tư liệu về máy khi cần. Snapshot đặt cùng filesystem tạm cũng có thể mất.
+
+Nếu dùng Blueprint, chọn đúng nhánh chứa `render.yaml`, xác minh instance **Free** và không có Disk trước khi tạo. Cấu hình không triển khai tự động khi có commit mới.
+
+## Miễn phí và giữ dữ liệu lâu dài
+
+Cần chuyển cơ sở dữ liệu và tệp ra kho bền vững, ví dụ Supabase Free cho PostgreSQL và Storage, kết hợp Render Free chạy ứng dụng. Đây cần thay đổi backend SQLite và cơ chế lưu tệp; bản hiện tại **chưa hỗ trợ kết nối Supabase**. Không chỉ điền URL Supabase vào cấu hình là dữ liệu sẽ được lưu ở đó. Các gói miễn phí có hạn mức và có thể tạm dừng khi ít hoạt động; phải theo dõi hạn mức và sao lưu riêng.
 
 ## VPS bằng Docker
 

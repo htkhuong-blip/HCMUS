@@ -2,14 +2,10 @@ services:
   - type: web
     name: hcmus-heritagekit
     runtime: docker
-    plan: starter
+    plan: free
     numInstances: 1
     healthCheckPath: /api/health
     autoDeployTrigger: "off"
-    disk:
-      name: heritage-data
-      mountPath: /var/lib/heritage
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production

@@ -73,4 +73,4 @@ Tài liệu Word/PDF đã được tạo sẵn. Nếu sửa thuyết minh Markdo
 
 ## Đưa website lên Internet
 
-Có sẵn `Dockerfile`, `render.yaml` và health check `/api/health`. Xem [hướng dẫn Render/VPS](docs/deployment.md). Cấu hình Render sử dụng ổ đĩa bền vững và dịch vụ có phí; xem giá và thiết lập tài khoản của bạn trước khi tạo. Chưa có website công khai chỉ vì đã tạo các tệp cấu hình.
+Có sẵn `Dockerfile`, `render.yaml` và health check `/api/health`. Xem [hướng dẫn Render/VPS](docs/deployment.md). Cấu hình Render hiện dùng Free, không có ổ đĩa trả phí; phù hợp xem thử vì database và tệp có thể mất khi máy chủ được tạo lại. Giữ dữ liệu thật lâu dài cần kho bền vững riêng. Chưa có website công khai chỉ vì đã tạo các tệp cấu hình.
