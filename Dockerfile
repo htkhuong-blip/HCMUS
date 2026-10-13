@@ -9,6 +9,7 @@ RUN --mount=type=secret,id=proxy_ca,required=false \
     && mkdir -p /var/lib/heritage/uploads /var/lib/heritage/backups \
     && chown -R node:node /var/lib/heritage
 COPY server.js features.js ./
+COPY shared ./shared
 COPY public ./public
 COPY docs ./docs
 COPY scripts/snapshot.mjs ./scripts/snapshot.mjs

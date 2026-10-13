@@ -1,5 +1,9 @@
 import { createToolkit } from "./toolkit.js";
 const app = document.querySelector("#app");
+const isDemo = window.HERITAGE_DEMO === true;
+const demoModule = isDemo ? import("./demo/adapter.js") : null;
+const asset = (path) =>
+  new URL(path.replace(/^\//, ""), new URL("./", location.href)).href;
 let user = null,
   records = [];
 const esc = (s) =>
@@ -29,6 +33,7 @@ function notice(s) {
   setTimeout(() => (n.style.display = "none"), 5000);
 }
 async function api(path, method = "GET", data) {
+  if (isDemo) return (await demoModule).demoApi(path, method, data);
   const r = await fetch("/api" + path, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -93,6 +98,45 @@ async function explore() {
   bind("public-products", publicProducts);
 }
 async function login() {
+  if (isDemo) {
+    app.innerHTML = `<section class="panel"><span class="eyebrow">Chọn vai trò mô phỏng</span><h2>Thử quy trình của HeritageKit</h2><p>Không cần tài khoản hoặc mật khẩu. Các vai trò chỉ để trình diễn thao tác trên dữ liệu của trình duyệt này.</p><div class="grid">${[
+      [
+        "guest",
+        "Khách tham quan",
+        "Khám phá hồ sơ và sản phẩm mà không dùng công cụ quản lý.",
+      ],
+      [
+        "admin",
+        "Quản trị",
+        "Quản lý toàn bộ dữ liệu thử, xuất/nhập và khôi phục mẫu.",
+      ],
+      [
+        "editor",
+        "Người nhập",
+        "Tạo hồ sơ, tư liệu, công việc và gửi kiểm chứng.",
+      ],
+      [
+        "reviewer",
+        "Chuyên gia",
+        "Thử kiểm chứng hồ sơ, sản phẩm và minh chứng.",
+      ],
+    ]
+      .map(
+        ([role, title, text]) =>
+          `<article class="card"><h3>${title}</h3><p>${text}</p><button class="primary" data-role="${role}">Thử vai trò ${title}</button></article>`,
+      )
+      .join("")}</div></section>`;
+    app.querySelectorAll("[data-role]").forEach(
+      (button) =>
+        (button.onclick = run(async () => {
+          user = await api("/login", "POST", { role: button.dataset.role });
+          updateNav();
+          await (user ? manage() : explore());
+        })),
+    );
+    return;
+  }
+
   app.innerHTML = `<section class="panel"><span class="eyebrow">Dành cho nhóm thực hiện</span><h2>Đăng nhập không gian quản lý</h2><form id="login-form"><label>Email<input name="email" type="email" required autocomplete="username"></label><label>Mật khẩu<input name="password" type="password" required autocomplete="current-password"></label><button class="primary">Đăng nhập</button></form></section>`;
   document.querySelector("form").onsubmit = run(async (e) => {
     e.preventDefault();
@@ -106,6 +150,12 @@ async function login() {
   });
 }
 function updateNav() {
+  if (isDemo) {
+    document.querySelector("#login").textContent = user
+      ? "Đổi vai trò"
+      : "Chọn vai trò";
+    return;
+  }
   document.querySelector("#login").textContent = user
     ? "Đăng xuất"
     : "Đăng nhập";
@@ -115,7 +165,7 @@ async function manage() {
   history.replaceState(null, "", location.pathname);
   const [rows, stats] = await Promise.all([api("/heritage"), api("/stats")]);
   records = rows;
-  app.innerHTML = `${toolkit.nav()}<span class="eyebrow">Không gian làm việc · ${esc(user.name)}</span><div class="row"><h2>Quản lý di sản</h2>${user.role !== "reviewer" ? '<button class="primary" id="new">+ Tạo hồ sơ</button>' : ""}${user.role === "admin" ? '<button id="backup">Xuất bản sao dữ liệu</button><button id="account">Thêm tài khoản</button>' : ""}</div><div class="metrics">${[
+  app.innerHTML = `${toolkit.nav()}<span class="eyebrow">Không gian làm việc · ${esc(user.name)}</span><div class="row"><h2>Quản lý di sản</h2>${user.role !== "reviewer" ? '<button class="primary" id="new">+ Tạo hồ sơ</button>' : ""}${user.role === "admin" ? `<button id="backup">Xuất bản sao dữ liệu</button>${isDemo ? "" : '<button id="account">Thêm tài khoản</button>'}` : ""}</div><div class="metrics">${[
     ["Hồ sơ", stats.total],
     ["Đã công bố", stats.published],
     ["Chờ duyệt", stats.pending],
@@ -144,7 +194,13 @@ async function manage() {
 async function detail(id) {
   const r = await api("/heritage/" + id);
   history.replaceState(null, "", `#heritage/${id}`);
-  app.innerHTML = `<button id="back">← ${user ? "Quản lý" : "Kho di sản"}</button><section class="panel"><span class="badge">${esc(labels[r.status])}</span><h1>${esc(r.title)}</h1><p>${esc(r.category)} · ⌖ ${esc(r.location)}</p><p>${esc(r.summary)}</p><div class="detail-content">${esc(r.content)}</div>${r.lat !== null && r.lng !== null ? `<p><a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lng}#map=16/${r.lat}/${r.lng}">Xem vị trí trên bản đồ ↗</a></p>` : ""}${r.lat !== null && r.lng !== null ? '<div id="detail-map" class="heritage-map" aria-label="Bản đồ vị trí di sản"></div>' : ""}<h2>Dấu mốc lịch sử</h2><div class="timeline">${r.timeline.map((t) => `<p><b>${esc(t.year)}</b><br>${esc(t.text)}</p>`).join("") || "<p>Chưa bổ sung dấu mốc.</p>"}</div><h2>Tư liệu</h2><div class="grid">${r.media.map((m) => `<div class="card media"><b>${esc(m.title)}</b>${m.type === "image" ? `<img src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy">` : m.type === "audio" ? `<audio controls src="${esc(m.url)}"></audio>` : m.type === "video" ? `<video controls preload="metadata" src="${esc(m.url)}"></video>` : `<a href="${esc(m.url)}" target="_blank" rel="noopener">Mở tài liệu ↗</a>`}<small>Nguồn: ${esc(m.source)}<br>Quyền sử dụng: ${esc(m.rights)}</small></div>`).join("") || "<p>Chưa có tư liệu.</p>"}</div><h2>Nguồn gốc và kiểm chứng</h2><p>Nguồn: ${esc(r.source)}<br>Tác giả/đơn vị: ${esc(r.author)}<br>Quyền sử dụng: ${esc(r.rights)}<br>Người kiểm chứng: ${esc(r.reviewer || "Chưa được kiểm chứng")}<br>Ghi chú: ${esc(r.review_note)}</p><div class="row">${user && ["admin", "editor"].includes(user.role) && (user.role === "admin" || user.id === r.created_by) ? '<button id="edit">Chỉnh sửa hồ sơ</button>' : ""}${user && ["draft", "rejected"].includes(r.status) && (user.role === "admin" || (user.role === "editor" && user.id === r.created_by)) ? '<button id="submit" class="primary">Gửi kiểm chứng</button>' : ""}<button id="share">Sao chép liên kết</button>${r.status === "published" ? '<button id="qr-share">Mã QR chia sẻ</button>' : ""}</div>${r.status === "published" ? `<div id="qr-panel" class="qr-panel" hidden><img src="/api/qr?heritage=${id}" alt="Mã QR trang giới thiệu di sản"><p><a class="button" download="heritage-${id}-qr.svg" href="/api/qr?heritage=${id}">Tải QR để in / trưng bày</a></p></div>` : ""}</section>${user && ["admin", "reviewer"].includes(user.role) && r.status === "pending" ? '<section class="panel"><h2>Kiểm chứng nội dung</h2><form id="review"><label>Kết quả<select name="status"><option value="published">Duyệt và công bố</option><option value="rejected">Yêu cầu bổ sung</option></select></label><label>Nhận xét kiểm chứng<textarea name="note" required></textarea></label><button class="primary">Lưu kết quả</button></form></section>' : ""}${r.status === "published" ? '<section class="panel"><h2>Chia sẻ trải nghiệm của bạn</h2><form id="feedback"><label>Tên (không bắt buộc)<input name="name" maxlength="100"></label><label>Mức độ hữu ích<select name="rating"><option value="5">5 — Rất hữu ích</option><option value="4">4 — Hữu ích</option><option value="3">3 — Bình thường</option><option value="2">2 — Cần cải thiện</option><option value="1">1 — Chưa hữu ích</option></select></label><label>Nhận xét<textarea name="comment" required maxlength="3000"></textarea></label><button class="primary">Gửi phản hồi</button></form></section>' : ""}`;
+  const qr =
+    r.status === "published"
+      ? isDemo
+        ? await (await demoModule).qrUrl(id)
+        : `/api/qr?heritage=${id}`
+      : "";
+  app.innerHTML = `<button id="back">← ${user ? "Quản lý" : "Kho di sản"}</button><section class="panel"><span class="badge">${esc(labels[r.status])}</span><h1>${esc(r.title)}</h1><p>${esc(r.category)} · ⌖ ${esc(r.location)}</p><p>${esc(r.summary)}</p><div class="detail-content">${esc(r.content)}</div>${r.lat !== null && r.lng !== null ? `<p><a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${r.lat}&mlon=${r.lng}#map=16/${r.lat}/${r.lng}">Xem vị trí trên bản đồ ↗</a></p>` : ""}${r.lat !== null && r.lng !== null ? '<div id="detail-map" class="heritage-map" aria-label="Bản đồ vị trí di sản"></div>' : ""}<h2>Dấu mốc lịch sử</h2><div class="timeline">${r.timeline.map((t) => `<p><b>${esc(t.year)}</b><br>${esc(t.text)}</p>`).join("") || "<p>Chưa bổ sung dấu mốc.</p>"}</div><h2>Tư liệu</h2><div class="grid">${r.media.map((m) => `<div class="card media"><b>${esc(m.title)}</b>${m.type === "image" ? `<img src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy">` : m.type === "audio" ? `<audio controls src="${esc(m.url)}"></audio>` : m.type === "video" ? `<video controls preload="metadata" src="${esc(m.url)}"></video>` : `<a href="${esc(m.url)}" ${m.url.startsWith("data:") ? `download="${esc(m.title || "tai-lieu")}"` : 'target="_blank"'} rel="noopener">Mở tài liệu ↗</a>`}<small>Nguồn: ${esc(m.source)}<br>Quyền sử dụng: ${esc(m.rights)}</small></div>`).join("") || "<p>Chưa có tư liệu.</p>"}</div><h2>Nguồn gốc và kiểm chứng</h2><p>Nguồn: ${esc(r.source)}<br>Tác giả/đơn vị: ${esc(r.author)}<br>Quyền sử dụng: ${esc(r.rights)}<br>Người kiểm chứng: ${esc(r.reviewer || "Chưa được kiểm chứng")}<br>Ghi chú: ${esc(r.review_note)}</p><div class="row">${user && ["admin", "editor"].includes(user.role) && (user.role === "admin" || user.id === r.created_by) ? '<button id="edit">Chỉnh sửa hồ sơ</button>' : ""}${user && ["draft", "rejected"].includes(r.status) && (user.role === "admin" || (user.role === "editor" && user.id === r.created_by)) ? '<button id="submit" class="primary">Gửi kiểm chứng</button>' : ""}<button id="share">${isDemo && id > 3 ? "Sao chép link trang demo" : "Sao chép liên kết"}</button>${r.status === "published" ? `<button id="qr-share">${isDemo && id > 3 ? "QR mở trang demo" : "Mã QR chia sẻ"}</button>` : ""}</div>${r.status === "published" ? `<div id="qr-panel" class="qr-panel" hidden><img src="${esc(qr)}" alt="Mã QR trang giới thiệu di sản">${isDemo ? "<p>Dữ liệu bạn sửa hoặc thêm chỉ ở trình duyệt này; QR không chuyển dữ liệu sang thiết bị khác. Dùng xuất/nhập JSON để chuyển dữ liệu demo.</p>" : ""}<p><a class="button" download="heritage-${id}-qr.svg" href="${esc(qr)}">Tải QR để in / trưng bày</a></p></div>` : ""}</section>${user && ["admin", "reviewer"].includes(user.role) && r.status === "pending" ? '<section class="panel"><h2>Kiểm chứng nội dung</h2><form id="review"><label>Kết quả<select name="status"><option value="published">Duyệt và công bố</option><option value="rejected">Yêu cầu bổ sung</option></select></label><label>Nhận xét kiểm chứng<textarea name="note" required></textarea></label><button class="primary">Lưu kết quả</button></form></section>' : ""}${r.status === "published" ? '<section class="panel"><h2>Chia sẻ trải nghiệm của bạn</h2><form id="feedback"><label>Tên (không bắt buộc)<input name="name" maxlength="100"></label><label>Mức độ hữu ích<select name="rating"><option value="5">5 — Rất hữu ích</option><option value="4">4 — Hữu ích</option><option value="3">3 — Bình thường</option><option value="2">2 — Cần cải thiện</option><option value="1">1 — Chưa hữu ích</option></select></label><label>Nhận xét<textarea name="comment" required maxlength="3000"></textarea></label><button class="primary">Gửi phản hồi</button></form></section>' : ""}`;
   if (r.lat !== null && r.lng !== null && window.L) {
     const map = await geographicMap("detail-map", [r.lat, r.lng], 6);
     L.marker([r.lat, r.lng]).addTo(map).bindPopup(esc(r.title));
@@ -161,7 +217,10 @@ async function detail(id) {
     await detail(id);
   });
   bind("share", async () => {
-    await navigator.clipboard.writeText(`${location.origin}/#heritage/${id}`);
+    await navigator.clipboard.writeText(
+      new URL(isDemo && id > 3 ? "./" : `./#heritage/${id}`, location.href)
+        .href,
+    );
     notice("Đã sao chép liên kết");
   });
   document.querySelector("#review")?.addEventListener(
@@ -277,7 +336,7 @@ function edit(r = {}) {
 }
 async function geographicMap(element, center, zoom) {
   const map = L.map(element).setView(center, zoom);
-  const geo = await (await fetch("/map/region.geojson")).json();
+  const geo = await (await fetch(asset("/map/region.geojson"))).json();
   const offline = L.geoJSON(geo, {
     style: {
       color: "#91a595",
@@ -345,6 +404,7 @@ bind("toolkit", () => toolkit.show());
 bind("explore", explore);
 bind("manage", manage);
 bind("login", async () => {
+  if (isDemo) return login();
   if (user) {
     await api("/logout", "POST", {});
     user = null;
@@ -356,7 +416,12 @@ async function route() {
   const m = /^#heritage\/(\d+)$/.exec(location.hash);
   await (m ? detail(Number(m[1])) : explore());
 }
-window.addEventListener("hashchange", run(route));
+window.addEventListener(
+  "hashchange",
+  run(async () => {
+    if (!location.hash || /^#heritage\//.test(location.hash)) await route();
+  }),
+);
 try {
   user = await api("/me");
   updateNav();

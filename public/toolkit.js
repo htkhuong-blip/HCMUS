@@ -44,6 +44,9 @@ const productTypes = [
 ];
 const stages = ["Khảo sát", "Thu thập", "Xây dựng", "Thử nghiệm", "Nghiệm thu"];
 export function createToolkit(ctx) {
+  const isDemo = window.HERITAGE_DEMO === true;
+  const asset = (path) =>
+    new URL(path.replace(/^\//, ""), new URL("./", location.href)).href;
   const { app, api, esc, notice, run, getUser, manage, detail } = ctx;
   let current = "overview",
     rows = [],
@@ -182,15 +185,15 @@ export function createToolkit(ctx) {
   function entryCard(r) {
     let content = "";
     if (current === "products")
-      content = `<p>${esc(r.type)} · ${esc(titleOf(lookups.heritage, r.heritage_id))}</p><p>${esc(r.description)}</p><a target="_blank" rel="noopener" href="${esc(r.url)}">Mở sản phẩm ↗</a><small>Nguồn: ${esc(r.source)}<br>Quyền: ${esc(r.rights)}</small>`;
+      content = `<p>${esc(r.type)} · ${esc(titleOf(lookups.heritage, r.heritage_id))}</p><p>${esc(r.description)}</p><a ${r.url.startsWith("data:") ? `download="${esc(r.title || "tai-lieu")}"` : 'target="_blank"'} rel="noopener" href="${esc(r.url)}">Mở sản phẩm ↗</a><small>Nguồn: ${esc(r.source)}<br>Quyền: ${esc(r.rights)}</small>`;
     if (current === "budget")
-      content = `<p>${esc(r.classification === "estimate" ? "Dự toán" : "Thực chi")} · ${esc(r.date)}</p><p>${r.quantity} ${esc(r.unit)} × ${Number(r.unit_cost).toLocaleString("vi-VN")} đ<br><b>${(r.quantity * r.unit_cost).toLocaleString("vi-VN")} đ</b></p><small>Nguồn: ${esc(r.funding)}<br>${esc(r.note)}</small>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">Chứng từ ↗</a>` : ""}`;
+      content = `<p>${esc(r.classification === "estimate" ? "Dự toán" : "Thực chi")} · ${esc(r.date)}</p><p>${r.quantity} ${esc(r.unit)} × ${Number(r.unit_cost).toLocaleString("vi-VN")} đ<br><b>${(r.quantity * r.unit_cost).toLocaleString("vi-VN")} đ</b></p><small>Nguồn: ${esc(r.funding)}<br>${esc(r.note)}</small>${r.url ? `<a href="${esc(r.url)}" ${r.url.startsWith("data:") ? `download="${esc(r.title || "tai-lieu")}"` : 'target="_blank"'} rel="noopener">Chứng từ ↗</a>` : ""}`;
     if (current === "tasks")
       content = `<p>${esc(r.stage)} · ${esc(r.unit)}</p><p>Phụ trách: ${esc(lookups.users.find((u) => u.id === r.assignee_id)?.name || "Chưa phân công")}<br>Hạn: ${esc(r.due)}</p><progress value="${r.progress}" max="100" aria-label="Tiến độ ${r.progress}%"></progress><small>${r.progress}% hoàn thành</small><p>${esc(r.description)}</p>`;
     if (current === "worklogs")
       content = `<p>${esc(r.unit)} · ${esc(r.date)}</p><p><b>${r.hours} giờ</b> · ${(r.hours / 8).toFixed(2)} ngày công</p><small>Nhiệm vụ: ${esc(titleOf(lookups.tasks, r.task_id))}</small><p>${esc(r.description)}</p>`;
     if (current === "evidence")
-      content = `<p>${esc(evidenceNames[r.kind_code])}</p><small>${esc(r.issuer)} · ${esc(r.date)}<br>Di sản: ${esc(titleOf(lookups.heritage, r.heritage_id))}<br>Sản phẩm: ${esc(titleOf(lookups.products, r.product_id))}</small><a href="${esc(r.url)}" target="_blank" rel="noopener">Xem minh chứng ↗</a><p>${esc(r.note)}</p>`;
+      content = `<p>${esc(evidenceNames[r.kind_code])}</p><small>${esc(r.issuer)} · ${esc(r.date)}<br>Di sản: ${esc(titleOf(lookups.heritage, r.heritage_id))}<br>Sản phẩm: ${esc(titleOf(lookups.products, r.product_id))}</small><a href="${esc(r.url)}" ${r.url.startsWith("data:") ? `download="${esc(r.title || "tai-lieu")}"` : 'target="_blank"'} rel="noopener">Xem minh chứng ↗</a><p>${esc(r.note)}</p>`;
     if (current === "trials")
       content = `<p>${esc(r.date)} · ${esc(r.audience)}</p><p><b>${r.participants.length}</b> người tham gia</p><p>${esc(r.summary || "Chưa có tổng hợp kết quả")}</p><details><summary>Phiếu khảo sát</summary>${r.participants.map((p) => `<p><b>${esc(p.name)}</b> · ${esc(p.unit)}<br>Dễ hiểu ${p.clarity}/5 · Dễ dùng ${p.usability}/5 · Hữu ích ${p.usefulness}/5<br>${esc(p.comment)}</p>`).join("")}</details>`;
     const reviewable = ["products", "evidence"].includes(current);
@@ -430,7 +433,7 @@ export function createToolkit(ctx) {
   }
   function review(r) {
     shell(
-      `<button id="back-list">← Danh sách</button><section class="panel"><h3>Kiểm tra: ${esc(r.title)}</h3><p>Đối chiếu nội dung, nguồn và quyền sử dụng; kết quả ghi nhận trong nhật ký.</p><a href="${esc(r.url)}" target="_blank" rel="noopener">Mở sản phẩm / minh chứng ↗</a><form id="review-entry">${select(
+      `<button id="back-list">← Danh sách</button><section class="panel"><h3>Kiểm tra: ${esc(r.title)}</h3><p>Đối chiếu nội dung, nguồn và quyền sử dụng; kết quả ghi nhận trong nhật ký.</p><a href="${esc(r.url)}" ${r.url.startsWith("data:") ? `download="${esc(r.title || "tai-lieu")}"` : 'target="_blank"'} rel="noopener">Mở sản phẩm / minh chứng ↗</a><form id="review-entry">${select(
         "status",
         "Kết quả",
         [
@@ -659,7 +662,7 @@ export function createToolkit(ctx) {
         )
         .join(
           "",
-        )}<h3>Thuyết minh cách thực hiện</h3><p>Tài liệu mô tả bộ công cụ, cách thao tác và đầu ra cho từng bước; có thể chỉnh sửa để đưa vào hồ sơ đề án.</p><div class="row"><a class="button primary" href="/guides/thuyet-minh-thuc-hien.docx" download>Tải thuyết minh Word ↓</a><a class="button" href="/guides/thuyet-minh-thuc-hien.pdf" download>Tải thuyết minh PDF ↓</a></div><h3>Biểu mẫu hỗ trợ triển khai</h3><p>Các mẫu để trống cần đơn vị điều chỉnh và xác nhận theo thẩm quyền.</p><div class="row">${[
+        )}<h3>Thuyết minh cách thực hiện</h3><p>Tài liệu mô tả bộ công cụ, cách thao tác và đầu ra cho từng bước; có thể chỉnh sửa để đưa vào hồ sơ đề án.</p><div class="row"><a class="button primary" href="${asset("/guides/thuyet-minh-thuc-hien.docx")}" download>Tải thuyết minh Word ↓</a><a class="button" href="${asset("/guides/thuyet-minh-thuc-hien.pdf")}" download>Tải thuyết minh PDF ↓</a></div><h3>Biểu mẫu hỗ trợ triển khai</h3><p>Các mẫu để trống cần đơn vị điều chỉnh và xác nhận theo thẩm quyền.</p><div class="row">${[
         ["phoi-hop.md", "Phiếu phối hợp"],
         ["ban-giao.md", "Biên bản bàn giao"],
         ["nghiem-thu.md", "Đối chiếu nghiệm thu"],
@@ -669,7 +672,7 @@ export function createToolkit(ctx) {
       ]
         .map(
           ([file, title]) =>
-            `<a class="button" href="/templates/${file}" download>${title} ↓</a>`,
+            `<a class="button" href="${asset(`/templates/${file}`)}" download>${title} ↓</a>`,
         )
         .join(
           "",
@@ -678,6 +681,50 @@ export function createToolkit(ctx) {
     bindNav();
   }
   async function settings() {
+    if (isDemo) {
+      shell(
+        `<section class="panel"><h3>Dữ liệu demo trên thiết bị này</h3><p>Dữ liệu lưu trong trình duyệt, không chia sẻ giữa các thiết bị và có thể mất khi xóa dữ liệu website. Không nhập mật khẩu hoặc thông tin cá nhân thật.</p><button id="export-demo">Xuất dữ liệu demo JSON</button>${getUser().role === "admin" ? '<label>Nhập bản xuất demo<input type="file" id="import-demo" accept="application/json,.json"></label><button id="reset-demo">Khôi phục dữ liệu minh họa</button>' : ""}<p id="demo-import-status" role="status"></p></section>`,
+      );
+      bind("export-demo", async () =>
+        download(
+          "heritagekit-demo.json",
+          JSON.stringify(await api("/backup"), null, 2),
+        ),
+      );
+      document.querySelector("#import-demo")?.addEventListener(
+        "change",
+        run(async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          if (file.size > 64 * 1024 * 1024)
+            throw Error("Bản nhập tối đa 64 MB");
+          if (
+            !confirm(
+              "Thay dữ liệu demo hiện tại bằng bản nhập? Hãy xuất bản sao trước.",
+            )
+          )
+            return;
+          const state = JSON.parse(await file.text());
+          await api("/demo/import", "POST", state);
+          document.querySelector("#demo-import-status").textContent =
+            "Đã nhập dữ liệu demo";
+          notice("Đã phục hồi bản xuất trên thiết bị này");
+        }),
+      );
+      bind("reset-demo", async () => {
+        if (
+          !confirm(
+            "Khôi phục dữ liệu mẫu? Dữ liệu demo bạn nhập sẽ bị thay thế.",
+          )
+        )
+          return;
+        await api("/demo/reset", "POST", {});
+        notice("Đã khôi phục dữ liệu mẫu");
+        await show("overview");
+      });
+      return;
+    }
+
     shell(
       `<section class="panel"><h3>Đổi mật khẩu</h3><form id="password-form"><label>Mật khẩu hiện tại<input name="current" type="password" required autocomplete="current-password"></label><label>Mật khẩu mới (ít nhất 12 ký tự)<input name="password" type="password" minlength="12" required autocomplete="new-password"></label><button class="primary">Đổi mật khẩu</button></form></section><section class="panel"><h3>Sao lưu & vận hành</h3><p>Xuất JSON cho hồ sơ, sản phẩm, công việc, phản hồi và nhật ký. Bản xuất này không chứa nội dung tệp đã tải hoặc mật khẩu.</p>${getUser().role === "admin" ? '<button id="backup-data">Xuất dữ liệu JSON</button><button id="audit-log">Xem nhật ký thay đổi</button>' : ""}<p>Để sao lưu đầy đủ cơ sở dữ liệu và tệp đính kèm, người vận hành chạy <code>npm run backup</code>. Hướng dẫn phục hồi và bàn giao nằm trong <code>docs/operations.md</code>.</p><div id="audit-output"></div></section>`,
     );

@@ -7,3 +7,5 @@ playwright-artifacts/
 
 .env.*
 !.env.example
+
+dist/

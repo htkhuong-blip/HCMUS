@@ -557,3 +557,14 @@ code {
     break-inside: avoid;
   }
 }
+.demo-banner {
+  padding: 14px 6%;
+  background: #fff0d6;
+  border-bottom: 1px solid #dac4a3;
+  color: #69461f;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.demo-banner b {
+  letter-spacing: 1px;
+}

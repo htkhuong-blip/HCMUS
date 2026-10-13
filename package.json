@@ -9,7 +9,10 @@
     "backup": "node scripts/snapshot.mjs backup",
     "restore": "node scripts/snapshot.mjs restore",
     "test:ui": "node scripts/ui-check.mjs",
-    "format": "prettier --write server.js features.js public/*.js public/*.css public/index.html scripts/*.mjs tests/*.js"
+    "format": "prettier --write server.js features.js public/*.js public/*.css public/index.html scripts/*.mjs tests/*.js shared/*.js public/demo/*.js",
+    "build:pages": "node scripts/build-pages.mjs",
+    "test:pages": "node scripts/pages-check.mjs",
+    "preview:pages": "node scripts/preview-pages.mjs"
   },
   "engines": {
     "node": ">=24"
@@ -20,6 +23,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.0",
+    "esbuild": "^0.28.2",
     "prettier": "^3.6.2"
   }
 }

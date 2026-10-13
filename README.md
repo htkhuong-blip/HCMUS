@@ -1,5 +1,11 @@
 # HCMUS HeritageKit 0.2
 
+## Bản demo miễn phí GitHub Pages
+
+Có sẵn bản demo chạy hoàn toàn trong trình duyệt, có dữ liệu minh họa và vai trò mô phỏng, không cần Render hay máy chủ. Dữ liệu riêng từng trình duyệt lưu bằng IndexedDB, có xuất/nhập JSON. Xem [cách bật và sử dụng GitHub Pages](docs/demo-pages.md).
+
+Dựng bằng `npm run build:pages`, kiểm tra `npm run test:pages`. Cấu hình xuất bản: `.github/workflows/pages.yml`. Chủ repository cần bật **Settings → Pages → Source: GitHub Actions** một lần. Bản demo không có tài khoản/phân quyền bảo mật hoặc lưu trữ dùng chung thật.
+
 Bộ công cụ web tiếng Việt hỗ trợ đề án CTTN 2026–2027: số hóa, lưu trữ và lan tỏa giá trị di sản văn hóa. Bản này có các công cụ để triển khai, quản lý minh chứng và mô tả cách thực hiện; chưa tự cung cấp dữ liệu di sản hoặc xác nhận đạt chỉ tiêu đề án.
 
 ## Khởi động
