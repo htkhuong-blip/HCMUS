@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: hcmus-heritagekit
+    runtime: docker
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    disk:
+      name: heritage-data
+      mountPath: /var/lib/heritage
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DB_PATH
+        value: /var/lib/heritage/heritage.db
+      - key: UPLOAD_DIR
+        value: /var/lib/heritage/uploads
+      - key: BACKUP_DIR
+        value: /var/lib/heritage/backups
+      - key: ADMIN_EMAIL
+        value: admin@heritagekit.local
+      - key: ADMIN_PASSWORD
+        sync: false

@@ -1,0 +1,9 @@
+data/
+*.log
+.env
+node_modules/
+backups/
+playwright-artifacts/
+
+.env.*
+!.env.example

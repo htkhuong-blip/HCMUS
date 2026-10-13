@@ -1,0 +1,25 @@
+{
+  "name": "hcmus-heritagekit",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "backup": "node scripts/snapshot.mjs backup",
+    "restore": "node scripts/snapshot.mjs restore",
+    "test:ui": "node scripts/ui-check.mjs",
+    "format": "prettier --write server.js features.js public/*.js public/*.css public/index.html scripts/*.mjs tests/*.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "prettier": "^3.6.2"
+  }
+}
