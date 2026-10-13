@@ -4,7 +4,7 @@
 
 ## Render (HTTPS do nền tảng cấp)
 
-1. Đưa mã nguồn và `render.yaml` lên repository GitHub của bạn, ở nhánh triển khai.
+1. Mã nguồn và `render.yaml` đã ở nhánh `deploy/heritagekit` của `htkhuong-blip/HCMUS`: https://github.com/htkhuong-blip/HCMUS/tree/deploy/heritagekit. Chọn đúng nhánh này khi tạo Blueprint.
 2. Đăng nhập Render bằng tài khoản của bạn, kết nối repository; chọn **New → Blueprint**, chọn repository và nhánh chứa cấu hình.
 3. Xem `render.yaml`: 1 dịch vụ Docker, 1 ổ đĩa bền vững tại `/var/lib/heritage`, không triển khai tự động khi có commit mới. Xem lại giá/gói và vùng máy chủ.
 4. Điền `ADMIN_PASSWORD` trong biểu mẫu môi trường **bảo mật** của Render (ít nhất 12 ký tự); không gửi mật khẩu trong chat. Biến chỉ dùng lần đầu tạo database. ADMIN_EMAIL mặc định `admin@heritagekit.local`, có thể đổi trước lần đầu.
@@ -39,3 +39,5 @@ Reverse proxy HTTPS chuyển tiếp đến `127.0.0.1:3000`; giới hạn reques
 - Chuyên gia khác duyệt; nội dung công bố xem được trên điện thoại.
 - QR trỏ đúng tên miền công khai; tệp vẫn còn sau restart.
 - Tạo snapshot và thử phục hồi ở môi trường riêng trước bàn giao.
+
+Bản Docker đã được kiểm tra tại môi trường phát triển: health check, đăng nhập, tạo hồ sơ, tải PDF, khởi động lại, giữ database/tệp và tạo snapshot. Đây chưa phải xác minh một dịch vụ Render đã được tạo hoặc chạy trên Internet.

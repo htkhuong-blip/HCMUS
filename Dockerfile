@@ -1,8 +1,10 @@
 FROM node:24-bookworm-slim
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --cache /tmp/heritage-npm-cache \
-    && npm cache clean --force --cache /tmp/heritage-npm-cache \
+RUN --mount=type=secret,id=proxy_ca,required=false \
+    if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; \
+    npm ci --omit=dev --cache /tmp/heritage-npm-cache \
+    && rm -rf /tmp/heritage-npm-cache \
     && command -v su \
     && mkdir -p /var/lib/heritage/uploads /var/lib/heritage/backups \
     && chown -R node:node /var/lib/heritage
@@ -11,7 +13,7 @@ COPY public ./public
 COPY docs ./docs
 COPY scripts/snapshot.mjs ./scripts/snapshot.mjs
 COPY deploy/container-entrypoint.sh /usr/local/bin/heritage-entrypoint
-RUN chmod 755 /usr/local/bin/heritage-entrypoint
+RUN chmod -R a+rX /app && chmod 755 /usr/local/bin/heritage-entrypoint
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 \
     DB_PATH=/var/lib/heritage/heritage.db \
     UPLOAD_DIR=/var/lib/heritage/uploads \
